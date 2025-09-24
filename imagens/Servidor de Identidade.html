@@ -1,0 +1,1098 @@
+<!DOCTYPE html>
+<!-- saved from url=(0458)https://identidade.senai.br/authenticationendpoint/login.do?RelayState=a.AMbiOOQ5JghOSO8a4xqoCyWEJ2YrB2sy8RAo-6Nn9XoGwd5bmAL-cl2htVIQl77M&commonAuthCallerPath=%2Fsamlsso&forceAuth=false&passiveAuth=false&tenantDomain=carbon.super&sessionDataKey=a4c53c9a-0ba0-4e84-a8f7-1c384d39886b&relyingParty=https%3A%2F%2Faccounts.google.com%2Fsamlrp%2Fmetadata%3Frpid%3D033yb3n93mahvk0&type=samlsso&sp=google.com&isSaaSApp=false&authenticators=BasicAuthenticator%3ALOCAL -->
+<html lang="en-US"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    
+    
+         
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link rel="icon" href="https://identidade.senai.br/authenticationendpoint/extensions/layouts/custom/assets/img/favicon.ico" type="image/x-icon">
+<link href="./Servidor de Identidade_files/theme.70534561.min.css" rel="stylesheet">
+
+ 
+<link rel="stylesheet" href="./Servidor de Identidade_files/styles.d0557a90.css">
+
+
+<title>
+  Servidor de Identidade
+</title>
+
+<script src="./Servidor de Identidade_files/jquery-3.6.0.min.js.download"></script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com/">
+<link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin="">
+<link href="./Servidor de Identidade_files/css2" rel="stylesheet">
+
+<link rel="stylesheet" href="./Servidor de Identidade_files/css2(1)">
+
+ 
+<link rel="stylesheet" href="./Servidor de Identidade_files/bootstrap.min.css">
+
+
+    
+
+    
+</head>
+<body class="login-portal layout authentication-portal-layout" onload="checkSessionKey()">
+
+    
+    
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<script>
+
+    const ZERO = 0;
+    const THOUSAND_MILLISECONDS = 1000;
+    const ONE_MINUTE = 60; // 1 * 60 Seconds
+    const ONE_HOUR = 60; // 1 * 60 minutes
+    const ONE_DAY = 24; // Hours
+
+    /**
+     * This function will give you a new instance of a Countdown object.
+     * You can create the instance like for example:-
+     *
+     *      const countdown1 = new Countdown(Countdown.seconds(5), function () {
+     *          // On done
+     *      }, function (time) {
+     *          // On tick
+     *      }, "MY_TIMER").start();
+     *
+     *      const countdown2 = new Countdown(Countdown.seconds(5), function () {
+     *          // On done
+     *      }, null, "MY_TIMER").start();
+     *
+     *      const countdown3 = new Countdown(Countdown.seconds(5), function () {
+     *          // On done
+     *      }).start();
+     *
+     *
+     * How can you utilize the onTick callback to do stuff?
+     *
+     * If you want to trigger some action on a specific time, what you can do is
+     * check each time component state or in relative time. For example:-
+     *
+     * #1 Time state condition check
+     * -----------------------------
+     * Now say for example you set a countdown of 5 minutes
+     * and want to run some code after 2 minute and 15 seconds
+     * of the countdown. You can have a condition like:-
+     *
+     *      if (time.minutes === 2 && time.seconds === 45)
+     *          # will execute once.
+     *      if (time.minutes <= 2 && time.seconds <= 45)
+     *          # will execute until finished.
+     *
+     * #2 Total time state relative check
+     * ----------------------------------
+     * Following the same example you can place a condition like below:-
+     *
+     *      const checkpoint = Countdown.minutes(2) + Countdown.seconds(15);
+     *
+     *      if (time.total === checkpoint)
+     *          # will execute once
+     *      if (time.total < checkpoint)
+     *          # will execute until finished
+     *
+     * @param time {number} as minutes/seconds/hours.
+     * @param onDone {function} called when countdown ends.
+     * @param onTick {function({total: number, hours: number, seconds: number, minutes: number, days: number})}
+     * @param name {String} a descriptive name for the timer.
+     */
+    function Countdown(
+        time = ZERO,
+        onDone = Countdown.noop,
+        onTick = Countdown.noop,
+        name = "COUNTDOWN"
+    ) {
+        this.until = new Date(Date.now() + time);
+        this.onTick = onTick;
+        this.onDone = onDone;
+        this.name = name;
+        this._enableLogs = false;
+        this._timerInterval = null;
+        this._running = false;
+    }
+
+    /**
+     * Starts the countdown. If it's running calling this
+     * multiple times won't reset the countdown.
+     */
+    Countdown.prototype.start = function () {
+        if (!this._running) {
+            // Since we have to use setInterval here we need to make
+            // sure the scope of 'this' is bind to callee.
+            this._timerInterval = setInterval(function () {
+                this.tick();
+            }.bind(this), THOUSAND_MILLISECONDS);
+            this._running = true;
+            this.log("Countdown: " + this.name + " started.");
+        }
+        return this;
+    };
+
+    /**
+     * Stops the countdown. When not running calling this
+     * will have no affect to the countdown instance.
+     */
+    Countdown.prototype.stop = function () {
+        if (this._running) {
+            clearInterval(this._timerInterval);
+            this._running = false;
+            if (this.onDone) {
+                this.onDone();
+            }
+            this.log("Countdown " + this.name + " stopped.");
+        }
+    };
+
+    Countdown.prototype.log = function (message) {
+        if (this._enableLogs && console && console.debug && message) {
+            console.debug(message);
+        }
+    };
+
+    /**
+     * Returns the remaining time as days, hours, minutes, and
+     * seconds. It also include a total sum of epoch seconds
+     * left (multiplied by 1000).
+     */
+    Countdown.prototype.getRemainingTime = function () {
+        const total = Date.parse(this.until.toString()) - Date.parse(new Date().toString());
+        const seconds = Math.floor((total / THOUSAND_MILLISECONDS) % ONE_MINUTE);
+        const minutes = Math.floor((total / THOUSAND_MILLISECONDS / ONE_MINUTE) % ONE_MINUTE);
+        const hours = Math.floor((total / (THOUSAND_MILLISECONDS * ONE_MINUTE * ONE_MINUTE)) % ONE_DAY);
+        const days = Math.floor(total / (THOUSAND_MILLISECONDS * ONE_MINUTE * ONE_MINUTE * ONE_DAY));
+        return { total, days, hours, minutes, seconds };
+    };
+
+    /**
+     * Calls every second when the timer is started.
+     */
+    Countdown.prototype.tick = function () {
+        const time = this.getRemainingTime();
+        if (this.onTick) {
+            this.onTick(time);
+        }
+        if (time.total <= ZERO) {
+            this.stop();
+        }
+    };
+
+    Countdown.seconds = function (input) {
+        return (input * ONE_MINUTE * THOUSAND_MILLISECONDS) / ONE_MINUTE;
+    };
+
+    Countdown.minutes = function (input) {
+        return input * ONE_MINUTE * THOUSAND_MILLISECONDS;
+    };
+
+    Countdown.hours = function (input) {
+        return input * ONE_MINUTE * THOUSAND_MILLISECONDS * ONE_HOUR;
+    };
+
+    Countdown.days = function (input) {
+        return (input * ONE_MINUTE * THOUSAND_MILLISECONDS) * ONE_HOUR * ONE_DAY;
+    };
+
+    /**
+     * @param time {{
+     *          total: number,
+     *          hours: number,
+     *          seconds: number,
+     *          minutes: number,
+     *          days: number
+     *       }}
+     */
+    Countdown.timeToReadable = function (time) {
+
+        let str = ""; // 1 days(s), 1 hour(s), 1 minute(s) and 30 second(s)
+        let hasPrevious = false;
+
+        if (time.days > 0) {
+            if (time.days === 1) {
+                str += "1 day";
+            } else {
+                str += String(time.days) + " days";
+            }
+            hasPrevious = true;
+        }
+
+        if (time.hours > 0) {
+            if (hasPrevious) str += ", ";
+            if (time.hours === 1) {
+                str += "1 hour";
+            } else {
+                str += String(time.hours) + " hours";
+            }
+            hasPrevious = true;
+        }
+
+        if (time.minutes > 0) {
+            if (hasPrevious) str += ", ";
+            if (time.minutes === 1) {
+                str += "1 minute";
+            } else {
+                str += String(time.minutes) + " minutes";
+            }
+            hasPrevious = true;
+        }
+
+        if (time.seconds > 0) {
+            if (hasPrevious) str += ", and ";
+            if (time.seconds === 1) {
+                str += "1 second";
+            } else {
+                str += String(time.seconds) + " seconds";
+            }
+        }
+
+        if (!str) return "now";
+        return "in " + str;
+
+    };
+
+    Countdown.noop = function () {
+        // No operations
+    };
+
+</script>
+
+
+
+
+
+
+
+
+<div class="ui modal tiny notify" id="asg-modal-0">
+    <div class="animated-icon text-center">
+        <div class="svg-box" data-testid="session-timeout-modal-warning-animated-icon">
+            <svg class="circular warning-stroke">
+                <circle class="path" cx="75" cy="75" r="50" fill="none" stroke-width="2" stroke-miterlimit="10">
+                </circle>
+            </svg>
+            <svg class="warning-icon warning-stroke">
+                <g transform="matrix(1,0,0,1,-615.516,-257.346)">
+                    <g transform="matrix(0.56541,-0.56541,0.56541,0.56541,93.7153,495.69)">
+                        <path class="line" d="M634.087,300.805L673.361,261.53" fill="none"></path>
+                    </g>
+                    <g transform="matrix(2.27612,-2.46519e-32,0,2.27612,-792.339,-404.147)">
+                        <circle class="dot" cx="621.52" cy="316.126" r="1.318"></circle>
+                    </g>
+                </g>
+            </svg>
+        </div>
+    </div>
+    <div class="content text-center">
+        <div class="description">
+            <div class="ui header" id="asg-modal-0-title">
+                <b>This sign-in instance is about to timeout!</b>
+            </div>
+            <p id="asg-modal-0-description">
+                You have been idle in this page for too long. For security reasons,you need to start over or you will be redirected to the sign-in page
+            </p>
+        </div>
+    </div>
+    <div class="actions">
+        <div class="ui deny button" id="asg-modal-0-dismiss-button">
+            Dismiss
+        </div>
+        
+            <div class="ui primary button" id="asg-modal-0-action-button">
+                Start over
+            </div>
+        
+    </div>
+</div>
+
+<script>
+
+    function ModalRef(onAction = ModalRef.noop, onCancel = ModalRef.noop) {
+        try {
+            this.onAction = onAction;
+            this.onCancel = onCancel;
+            this.modal = $("#asg-modal-0");
+            this.desc = $("#asg-modal-0-description");
+            this.cancelBtn = $("#asg-modal-0-dismiss-button");
+            this.actionBtn = $("#asg-modal-0-action-button");
+            this.init();
+        } catch (e) {
+            // Ignore any exceptions.
+        }
+    }
+
+    ModalRef.prototype.init = function () {
+        if (this.cancelBtn) {
+            this.cancelBtn.click(this.onCancel);
+        }
+        if (this.actionBtn) {
+            this.actionBtn.click(this.onAction);
+        }
+    };
+
+    ModalRef.prototype.isActive = function () {
+        return this.modal.hasClass("active");
+    };
+
+    ModalRef.prototype.show = function () {
+        if (this.isActive()) return;
+        this.modal.modal({
+            detachable: false,
+            closable: false
+        }).modal("show");
+    };
+
+    ModalRef.prototype.hide = function () {
+        this.modal.modal("hide");
+    };
+
+    ModalRef.prototype.changeDescription = function (desc) {
+        this.desc.text(desc);
+    };
+
+    ModalRef.prototype.changeDescriptionAsHTML = function (html) {
+        this.desc.html(html);
+    };
+
+    ModalRef.prototype.hideDismissButton = function () {
+        this.cancelBtn.hide();
+    };
+
+    ModalRef.prototype.showDismissButton = function () {
+        this.cancelBtn.show();
+    };
+
+    ModalRef.prototype.dispose = function () {
+        this.hide();
+        this.actionBtn.unbind("click");
+        this.cancelBtn.unbind("click");
+        this.onAction = null;
+        this.onCancel = null;
+        this.modal = null;
+        this.desc = null;
+        this.cancelBtn = null;
+        this.actionBtn = null;
+    };
+
+    ModalRef.noop = function () {
+        // No operations
+    };
+
+</script>
+
+
+
+
+
+
+
+
+<script>
+
+    /**
+     * This the props object that holds dynamic server side variables.
+     * This will allow the script functions to access the variable
+     * simply via a object.
+     */
+    const PROPS = {
+        totalTimeoutMinutes: 35,
+        notifyOnMinute: 2,
+        appAccessUrlEncoded: "",
+        pageName: "sign-in",
+        showModal: false
+    };
+
+    if(PROPS.showModal) {
+        $(document).ready(function () {
+
+            const SPACE_CHAR = " ";
+            const timeout = Countdown.minutes(PROPS.totalTimeoutMinutes);
+            const countdown = new Countdown(timeout, onDone, onTick);
+
+            const modal = new ModalRef(function (/*Modal onAction*/) {
+                // Once the modal action button clicked, the user will be redirected
+                // to the specified URL immediately. If the url is not available then
+                // it will not redirect or do anything.
+                if (PROPS.appAccessUrlEncoded) {
+                    window.location = PROPS.appAccessUrlEncoded;
+                }
+            });
+
+            /**
+             * This function will be called everytime when time ticks.
+             *
+             * @param time {{total: number, hours: number, seconds: number, minutes: number, days: number}}
+             */
+            function onTick(time) {
+                if (time.total < Countdown.minutes(PROPS.notifyOnMinute)) {
+                    modal.changeDescriptionAsHTML(
+                    "You have been idle in" + SPACE_CHAR + PROPS.pageName + SPACE_CHAR +
+                    "page for too long. For security reasons, you need to start over or you will be redirected " +
+                    "to the sign-in page"  + SPACE_CHAR + "<b>" + Countdown.timeToReadable(time) + "</b>."
+                    );
+                }
+                if (time.total === Countdown.minutes(PROPS.notifyOnMinute)) {
+                    modal.show();
+                }
+            }
+
+            /**
+             * Once the timer is finished, this method will be
+             * invoked to execute the target action.
+             */
+            function onDone() {
+                // Once the countdown is over, the user will be redirected
+                // to the access URL immediately.
+                window.location = PROPS.appAccessUrlEncoded;
+            }
+
+            countdown.start();
+        });
+    }
+
+</script>
+
+    
+
+    
+  
+        
+            
+            
+                 
+
+
+
+
+
+
+
+ 
+
+<header class="px-4 px-md-5">
+  <div class="container-fluid pt-5 no-gutter">
+    <div class="row justify-content-between no-gutter">
+      <div class="col col-6 col-xl-1 px-0">
+        <a id="back-link" class="btn btn-link btn-link-light text-decoration-none p-0 btn-icon">
+          <span class="material-symbols-outlined icon"> arrow_back </span>
+        </a>
+      </div>
+
+      <div class="d-flex col col-6 col-xl-1 px-0 justify-content-end">
+        <a href="https://identidade.senai.br/" id="logo">
+          <img class="logo" src="./Servidor de Identidade_files/logotipo-senai.svg" alt="Logotipo SENAI">
+        </a>
+      </div>
+    </div>
+  </div>
+</header>
+
+<script>
+  var element = document.getElementById("back-link");
+
+  element.addEventListener("click", (e) => {
+    e.preventDefault();
+
+    window.history.back();
+
+    return false;
+  });
+</script>
+
+            
+        
+        
+        
+        
+    
+  <main class="h-100 d-flex align-items-center px-3 px-md-0" style="flex: 1">
+    <div class="container-fluid">
+      <div class="row align-items-center">
+        <div class="col col-5 col-xxl-4 d-none d-lg-flex offset-sm-1">
+            
+        
+        
+            
+                
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div class="d-flex flex-column justify-content-between glassmorphism p-4" style="height: 92vh; margin-top: -4rem">
+  <div class="pt-info-container">
+    <h1 class="ff-neo-sans fw-bolder color-neutral-dark-overlay-600">
+      Quer descobrir algo novo?
+    </h1>
+
+    <h6 class="color-neutral-600">
+      Cadastre-se para aprender à sua maneira, evoluir suas habilidades e explorar oportunidades incríveis.
+    </h6>
+  </div>
+
+  <div class="d-flex glassmorphism rounded-4" style="padding: 24px; gap: 24px">
+    <div class="nai-image-container position-relative">
+      <img class="position-absolute" src="./Servidor de Identidade_files/nai.png" alt="NAI - Assistente Virtual">
+    </div>
+
+    <div class="d-flex flex-column justify-content-between">
+      <p class="custom-fs-6 color-neutral-dark-overlay-800">
+        Tornando o dia a dia mais simples e leve! Estou pronta para organizar, esclarecer e oferecer suporte, para que você possa focar no que realmente importa.
+      </p>
+
+      <div>
+        <p class="mb-0 custom-fs-5">
+          <b>Nai</b>
+        </p>
+
+        <p class="color-neutral-600 custom-fs-7 mb-0">
+          Inteligência Artificial do SENAI
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="container-fluid position-absolute top-0 start-0 h-100 w-100 px-0 overflow-hidden -z-1">
+  <div class="row h-100 w-100 background-animation position-relative px-0">
+    <div class="col px-0 col-7 col-xxl-6 d-none reverse d-lg-flex position-absolute top-0 start-0 h-100" id="bg-img-1"></div>
+    <div class="col px-0 col-7 col-xxl-6 d-none reverse d-lg-flex position-absolute top-0 start-0 h-100" id="bg-img-2"></div>
+    <div class="col px-0 col-7 col-xxl-6 d-none reverse d-lg-flex position-absolute top-0 start-0 h-100" id="bg-img-3"></div>
+    <div class="col px-0 col-7 col-xxl-6 d-none reverse d-lg-flex position-absolute top-0 start-0 h-100" id="bg-img-4"></div>
+  </div>
+</div>
+
+            
+        
+        
+        
+    
+        </div>
+
+        <div class="col col-12 gx-4 col-sm-10 col-lg-5 col-xxl-4 offset-sm-1 offset-lg-0 offset-xxl-2">
+          
+        
+        
+        
+            <div class="ui segment">
+                <div>
+                    
+                        <h2 class="ff-neo-sans mb-2">
+                            Seu próximo passo
+                            <b>
+                                começa aqui
+                            </b>
+                        </h2>
+
+                        <p class="mb-4 color-neutral-900">Acesse sua conta e continue sua jornada de aprendizado e descobertas.</p>
+                    
+                </div>
+
+                <div class="segment-form">
+                    
+                                        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<script>
+    function goBack() {
+        document.getElementById("restartFlowForm").submit();
+    }
+
+    function onCompleted() {
+        $('#loginForm').submit();
+    }
+
+    // Handle form submission preventing double submission.
+    $(document).ready(function(){
+        $.fn.preventDoubleSubmission = function() {
+            $(this).on('submit',function(e){
+                var $form = $(this);
+                if ($form.data('submitted') === true) {
+                    // Previously submitted - don't submit again.
+                    e.preventDefault();
+                    console.warn("Prevented a possible double submit event");
+                } else {
+                    e.preventDefault();
+                    
+                    var userName = document.getElementById("username");
+                    userName.value = userName.value.trim();
+
+                    if (userName.value) {
+                        let contextPath = ""
+                        if (contextPath !== "") {
+                            contextPath = contextPath.startsWith('/') ? contextPath : "/" + contextPath
+                            contextPath = contextPath.endsWith('/') ?
+                                contextPath.substring(0, contextPath.length - 1) : contextPath
+                        }
+                        $.ajax({
+                            type: "GET",
+                            url: contextPath + "../logincontext?sessionDataKey=a4c53c9a-0ba0-4e84-a8f7-1c384d39886b&application=google.com&authenticators=BasicAuthenticator%3ALOCAL&tenantDomain=carbon.super",
+                            xhrFields: { withCredentials: true },
+                            success: function (data) {
+                                if (data && data.status == 'redirect' && data.redirectUrl && data.redirectUrl.length > 0) {
+                                    window.location.href = data.redirectUrl;
+                                } else if ($form.data('submitted') !== true) {
+                                    $form.data('submitted', true);
+                                    document.getElementById("loginForm").submit();
+                                } else {
+                                    console.warn("Prevented a possible double submit event.");
+                                }
+                            },
+                            cache: false
+                        });
+                    }
+                }
+            });
+
+            return this;
+        };
+        $('#loginForm').preventDoubleSubmission();
+    });
+
+</script>
+
+
+
+
+
+    <div class="ui visible negative message" style="display: none;" id="error-msg" data-testid="login-page-error-message"></div>
+
+
+
+
+<form class="ui large form" action="https://identidade.senai.br/samlsso" method="post" id="loginForm">
+    
+    <input id="tocommonauth" name="tocommonauth" type="hidden" value="true">
+    
+
+    
+    
+        <div class="field">
+            <label class="fw-medium fs-7 fs-xl-8" for="username">E-mail ou CPF (apenas números)<span> *</span></label>
+            <div class="ui fluid icon input">
+                <input type="hidden" id="username" value="" name="username">
+
+                <input type="text" class="fs-input" id="username-base" value="" name="username-base" placeholder="Digite seu e-mail ou CPF" data-testid="login-page-username-input" required="">
+            </div>
+        </div>
+    
+        <div class="field mb-2">
+            <label class="fw-medium fs-7 fs-xl-8" for="password">Senha<span> *</span></label>
+            <div class="ui fluid icon input addon-wrapper">
+                <input type="password" id="password" name="password" value="" class="fs-input" autocomplete="off" required="" placeholder="Digite sua senha" data-testid="login-page-password-input" style="padding-right: 2.3em !important;">
+                    <span class="material-symbols-outlined icon" id="passwordUnmaskIcon"> visibility </span>
+            </div>
+        </div>
+
+    
+
+    
+
+
+
+    
+
+   <div class="d-flex justify-content-end justify-content-sm-between">
+        <div class="ui checkbox d-none d-sm-flex remember-me">
+            <input type="checkbox" id="chkRemember" name="chkRemember" data-testid="login-page-remember-me-checkbox">
+            <label for="chkRemember">Lembre-se de mim neste dispositivo!</label>
+        </div>
+
+    
+        <div class="forgot-password">
+            <a class="text-decoration-none" href="https://identidade.senai.br/recuperar-senha?RelayState=a.AMbiOOQ5JghOSO8a4xqoCyWEJ2YrB2sy8RAo-6Nn9XoGwd5bmAL-cl2htVIQl77M&amp;commonAuthCallerPath=%2Fsamlsso&amp;forceAuth=false&amp;passiveAuth=false&amp;tenantDomain=carbon.super&amp;sessionDataKey=a4c53c9a-0ba0-4e84-a8f7-1c384d39886b&amp;relyingParty=https%3A%2F%2Faccounts.google.com%2Fsamlrp%2Fmetadata%3Frpid%3D033yb3n93mahvk0&amp;type=samlsso&amp;sp=google.com&amp;isSaaSApp=false&amp;authenticators=BasicAuthenticator%3ALOCAL&amp;isUsernameRecovery=false&amp;callback=https%3A%2F%2Fidentidade.senai.br%3A443%2Fauthenticationendpoint%2Flogin.do%3FRelayState%3Da.AMbiOOQ5JghOSO8a4xqoCyWEJ2YrB2sy8RAo-6Nn9XoGwd5bmAL-cl2htVIQl77M%26commonAuthCallerPath%3D%2Fsamlsso%26forceAuth%3Dfalse%26passiveAuth%3Dfalse%26tenantDomain%3Dcarbon.super%26sessionDataKey%3Da4c53c9a-0ba0-4e84-a8f7-1c384d39886b%26relyingParty%3Dhttps%3A%2F%2Faccounts.google.com%2Fsamlrp%2Fmetadata%3Frpid%3D033yb3n93mahvk0%26type%3Dsamlsso%26sp%3Dgoogle.com%26isSaaSApp%3Dfalse%26authenticators%3DBasicAuthenticator%3ALOCAL">
+                Esqueceu a senha?
+            </a>
+        </div>
+    
+   </div>
+
+
+    <div class="buttons">
+        
+        <div class="field">
+            
+        </div>
+        
+
+        
+    </div>
+
+    <input type="hidden" name="sessionDataKey" value="a4c53c9a-0ba0-4e84-a8f7-1c384d39886b">
+
+    <!-- Commented out until further notice -->
+    <!-- <div class="cookie-policy-message" data-testid="login-page-policy-messages">
+        Usamos cookies do navegador para experiência de sua sessão e proporcionará uma melhor experiência. Você pode consultar nosso
+        <a href="cookie_policy.do" target="policy-pane" data-testid="login-page-cookie-policy-link">
+            Política de Cookies
+        </a>
+        para mais detalhes.
+        <br><br>
+        Ao entrar, você concorda com nossos
+        <a href="privacy_policy.do" target="policy-pane" data-testid="login-page-privacy-policy-link">
+            Termos de serviço
+        </a>
+    </div> -->
+
+    <div class="ui divider hidden"></div>
+
+    <div class="login-options bottom-0 start-0 pb-4 px-4 p-sm-0 w-100">
+        <div class="ui checkbox fs-6 mb-3 d-flex d-sm-none">
+            <input type="checkbox" id="chkRememberMobile" name="chkRememberMobile" data-testid="login-page-remember-me-mobile-checkbox">
+            <label for="chkRememberMobile">Lembre-se de mim neste dispositivo!</label>
+        </div>
+
+        <button class="ui primary fluid large button" type="submit">
+            Entrar
+        </button>
+
+        
+            <div class="new-account text-center w-100 mt-3 mt-sm-4">
+                Não tem uma conta?
+
+                <a class="text-decoration-none" href="https://identidade.senai.br/cadastro">
+                    Clique aqui
+                </a>
+            </div>
+        
+    </div>
+
+    <script defer="">
+        $('#chkRememberMobile').on('change', () => {
+            $('#chkRemember').trigger('click');
+        })
+
+        $('#username-base').on('change', () => {
+            const inputValue = $('#username-base').val()?.toLowerCase();
+
+            $('#username').val(
+                inputValue.includes('@')
+                    ? inputValue
+                    : inputValue.replace(/\D/g, '')
+            );
+        })
+
+        /**
+         * Toggles the password visibility using the attribute
+         * type of the input.
+         *
+         * @param event {Event} click target
+         * @description stops propagation
+         */
+        $("#passwordUnmaskIcon").click(function (event) {
+            event.preventDefault();
+            var $passwordInput = $("#password");
+
+            if ($passwordInput.attr("type") === "password") {
+                $(this).html('visibility_off');
+                $passwordInput.attr("type", "text");
+            } else {
+                $(this).html('visibility');
+                $passwordInput.attr("type", "password");
+            }
+        });
+
+        function onSubmitResend(token) {
+           $("#resendForm").submit();
+        }
+
+        // Removing the recaptcha UI from the keyboard tab order
+        Array.prototype.forEach.call(document.getElementsByClassName('g-recaptcha'), function (element) {
+            //Add a load event listener to each wrapper, using capture.
+            element.addEventListener('load', function (e) {
+                //Get the data-tabindex attribute value from the wrapper.
+                var tabindex = e.currentTarget.getAttribute('data-tabindex');
+                //Check if the attribute is set.
+                if (tabindex) {
+                    //Set the tabIndex on the iframe.
+                    e.target.tabIndex = "-1";
+                }
+            }, true);
+        });
+
+    </script>
+
+</form>
+
+<form action="https://identidade.senai.br/samlsso" method="post" id="restartFlowForm">
+    <input type="hidden" name="sessionDataKey" value="a4c53c9a-0ba0-4e84-a8f7-1c384d39886b">
+    <input type="hidden" name="restart_flow" value="true">
+    <input id="tocommonauth" name="tocommonauth" type="hidden" value="true">
+</form>
+
+                                    
+                    
+
+                    
+                    
+                </div>
+            </div>
+        
+        
+    
+        </div>
+      </div>
+    </div>
+  </main>
+  
+        
+        
+        
+        
+            
+            
+                 
+
+
+
+
+
+
+
+ 
+
+<footer class="footer" style="text-align: center"></footer>
+
+            
+        
+    
+ 
+
+
+
+<script src="./Servidor de Identidade_files/script.js.download"></script>
+
+
+    
+    
+        
+
+<script src="./Servidor de Identidade_files/semantic.min.js.download"></script>
+
+    
+
+    
+    <script>
+        function onMoment(notification) {
+            displayGoogleSignIn(notification.isNotDisplayed() || notification.isSkippedMoment());
+        }
+
+        function displayGoogleSignIn(display) {
+            var element = document.getElementById("googleSignIn");
+            if (element != null) {
+                if (display) {
+                    element.style.display = "block";
+                } else {
+                    element.style.display = "none";
+                }
+            }
+        }
+
+        function handleCredentialResponse(response) {
+           $('#credential').val(response.credential);
+           $('#googleOneTapForm').submit();
+        }
+
+        function checkSessionKey() {
+            var proxyPath = ""
+            $.ajax({
+                type: "GET",
+                url: proxyPath + "../logincontext?sessionDataKey=a4c53c9a-0ba0-4e84-a8f7-1c384d39886b&application=google.com&authenticators=BasicAuthenticator%3ALOCAL&tenantDomain=carbon.super",
+                xhrFields: { withCredentials: true },
+                success: function (data) {
+                    if (data && data.status == 'redirect' && data.redirectUrl && data.redirectUrl.length > 0) {
+                        window.location.href = data.redirectUrl;
+                    }
+                },
+                cache: false
+            });
+        }
+
+        function getParameterByName(name, url) {
+            if (!url) {
+                url = window.location.href;
+            }
+            name = name.replace(/[\[\]]/g, '\$&');
+            var regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)'),
+            results = regex.exec(url);
+            if (!results) return null;
+            if (!results[2]) return "";
+            return decodeURIComponent(results[2].replace(/\+/g, ' '));
+        }
+
+        $(document).ready(function () {
+            $('#user-name-label').popup({
+                lastResort: 'top left'
+            });
+            $('.main-link').click(function () {
+                $('.main-link').next().hide();
+                $(this).next().toggle('fast');
+                var w = $(document).width();
+                var h = $(document).height();
+                $('.overlay').css("width", w + "px").css("height", h + "px").show();
+            });
+
+            $('.overlay').click(function () {
+                $(this).hide();
+                $('.main-link').next().hide();
+            });
+        });
+
+        function myFunction(key, value, name) {
+            var object = document.getElementById(name);
+            var domain = object.value;
+
+
+            if (domain != "") {
+                document.location = "../commonauth?idp=" + key + "&authenticator=" + value +
+                        "&sessionDataKey=a4c53c9a-0ba0-4e84-a8f7-1c384d39886b&domain=" +
+                        domain;
+            } else {
+                document.location = "../commonauth?idp=" + key + "&authenticator=" + value +
+                        "&sessionDataKey=a4c53c9a-0ba0-4e84-a8f7-1c384d39886b";
+            }
+        }
+
+        function handleNoDomain(elem, key, value) {
+            var linkClicked = "link-clicked";
+            if ($(elem).hasClass(linkClicked)) {
+                console.warn("Preventing multi click.")
+            } else {
+                $(elem).addClass(linkClicked);
+                document.location = "../commonauth?idp=" + key + "&authenticator=" + value +
+                    "&sessionDataKey=a4c53c9a-0ba0-4e84-a8f7-1c384d39886b" +
+                    "";
+            }
+        }
+
+        window.onunload = function(){};
+
+        function changeUsername (e) {
+            document.getElementById("changeUserForm").submit();
+        }
+
+        $('.isHubIdpPopupButton').popup({
+            popup: '.isHubIdpPopup',
+            on: 'click',
+            position: 'top left',
+            delay: {
+                show: 300,
+                hide: 800
+            }
+        });
+    </script>
+
+    
+
+
+</body></html>
